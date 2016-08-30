@@ -1,9 +1,8 @@
 import logging
 from typing import *
 
-from bot import models, trello
+from bot import models, trello, messages
 from bot.base_bot import BaseBot, Context
-import messages
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
