@@ -92,3 +92,12 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Database files
+*.sqlite
+
+# Local dev files
+*.local*
+
+# Config
+config.py
