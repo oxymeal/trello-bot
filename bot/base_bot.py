@@ -12,6 +12,10 @@ class Context:
         self.args = args or []
 
     @property
+    def message(self):
+        return self.update.message
+
+    @property
     def chat_id(self):
         return self.update.message.chat_id
 
@@ -65,6 +69,9 @@ class Dialog:
         self.steps = sorted(self.steps, key=lambda s: s[0])
         self.steps = [s[1] for s in self.steps]
 
+    def cancel(self, ctx: Context):
+        ctx.send_message("...")
+
     @property
     def current_step(self):
         return self.steps[0]
@@ -117,6 +124,14 @@ class BaseBot:
             handler(ctx)
 
         return wrapper
+
+    def cmd_cancel(self, ctx: Context):
+        try:
+            dialog = self.dialogs[ctx.chat_id]
+            dialog.cancel(ctx)
+            del self.dialogs[ctx.chat_id]
+        except KeyError:
+            pass
 
     def _start_dialog_for(self, chat_id, dialog):
         self.dialogs[chat_id] = dialog
