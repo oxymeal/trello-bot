@@ -70,7 +70,7 @@ class Dialog:
         self.steps = [s[1] for s in self.steps]
 
     def cancel(self, ctx: Context):
-        ctx.send_message("...")
+        return False
 
     @property
     def current_step(self):
@@ -128,8 +128,8 @@ class BaseBot:
     def cmd_cancel(self, ctx: Context):
         try:
             dialog = self.dialogs[ctx.chat_id]
-            dialog.cancel(ctx)
-            del self.dialogs[ctx.chat_id]
+            if dialog.cancel(ctx):
+                del self.dialogs[ctx.chat_id]
         except KeyError:
             pass
 
