@@ -1,102 +1,70 @@
 import logging
-import os
 from typing import *
 
-from telegram import Bot, Update
-from telegram.ext import CommandHandler, MessageHandler, Updater
-
-from bot import messages, models, trello
-import config
+from bot import models, trello
+from bot.base_bot import BaseBot, Context
+import messages
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
 
-trello_app = trello.App(config.TRELLO_KEY)
 
-updater = Updater(token=config.TELEGRAM_KEY)
-dispatcher = updater.dispatcher
+class TrelloBot(BaseBot):
+    def __init__(self, telegram_key: str, trello_key: trello.App):
+        self.trello = trello.App(trello_key)
+        super().__init__(telegram_key)
 
+    def wrap_context(self, ctx: Context):
+        (ctx.session, _) = models.Session.get_or_create(chat_id=ctx.chat_id)
 
-def start(bot: Bot, update: Update):
-    bot.send_message(chat_id=update.message.chat_id,
-                     text=messages.START,
-                     parse_mode="Markdown")
+        if ctx.session.trello_token:
+            ctx.trello = self.trello.session(ctx.session.trello_token)
 
+        return ctx
 
-dispatcher.add_handler(CommandHandler('start', start))
+    def cmd_start(self, ctx: Context):
+        ctx.send_message(messages.START)
 
+    def cmd_auth(self, ctx: Context):
+        try:
+            token = ctx.args[0]
+        except IndexError:
+            msg = messages.AUTH_URL.format(url=self.trello.auth_url())
+            ctx.send_message(msg)
+            return
 
-def auth(bot: Bot, update: Update, args: List[str]):
-    try:
-        token = args[0]
-    except IndexError:
-        token = None
+        try:
+            me = self.trello.session(token).me()
+        except trello.AuthError:
+            ctx.send_message(messages.AUTH_FAILURE)
+            return
 
-    if not token:
-        msg = messages.AUTH_URL.format(url=trello_app.auth_url())
-        bot.send_message(chat_id=update.message.chat_id,
-                         text=msg,
-                         parse_mode="Markdown")
-        return
+        ctx.session.trello_token = token
+        ctx.session.save()
 
-    try:
-        me = trello_app.session(token).me()
-    except trello.AuthError:
-        bot.send_message(chat_id=update.message.chat_id,
-                         text=messages.AUTH_FAILURE)
-        return
+        msg = messages.AUTH_SUCCESS.format(fullname=me.fullname)
+        ctx.send_message(msg)
 
-    (session, _) = models.Session.get_or_create(chat_id=update.message.chat_id)
-    session.trello_token = token
-    session.save()
+    def cmd_status(self, ctx: Context):
+        if not ctx.session.trello_token:
+            ctx.send_message(messages.STATUS_UNAUTH)
+            return
 
-    msg = messages.AUTH_SUCCESS.format(fullname=me.fullname)
-    bot.send_message(chat_id=update.message.chat_id,
-                     text=msg,
-                     parse_mode="Markdown")
+        try:
+            me = ctx.trello.me()
+        except trello.AuthError:
+            ctx.send_message(messages.STATUS_INVALID_TOKEN)
+            return
 
+        msg = messages.STATUS_OK.format(fullname=me.fullname)
+        ctx.send_message(msg)
 
-dispatcher.add_handler(CommandHandler('auth', auth, pass_args=True))
+    def cmd_unauth(self, ctx: Context):
+        if not ctx.session.trello_token:
+            ctx.send_message(messages.UNAUTH_ALREADY)
+            return
 
-
-def status(bot: Bot, update: Update):
-    (session, _) = models.Session.get_or_create(chat_id=update.message.chat_id)
-
-    if not session.trello_token:
-        bot.send_message(chat_id=update.message.chat_id,
-                         text=messages.STATUS_UNAUTH)
-        return
-
-    try:
-        me = trello_app.session(session.trello_token).me()
-    except trello.AuthError:
-        bot.send_message(chat_id=update.message.chat_id,
-                         text=messages.STATUS_INVALID_TOKEN)
-        return
-
-    msg = messages.STATUS_OK.format(fullname=me.fullname)
-    bot.send_message(chat_id=update.message.chat_id,
-                     text=msg,
-                     parse_mode="Markdown")
-
-
-dispatcher.add_handler(CommandHandler('status', status))
-
-
-def unauth(bot: Bot, update: Update):
-    (session, _) = models.Session.get_or_create(chat_id=update.message.chat_id)
-
-    if not session.trello_token:
-        bot.send_message(chat_id=update.message.chat_id,
-                         text=messages.UNAUTH_ALREADY)
-        return
-
-    session.trello_token = None
-    session.save()
-
-    bot.send_message(chat_id=update.message.chat_id,
-                     text=messages.UNAUTH_SUCCESS)
-
-
-dispatcher.add_handler(CommandHandler('unauth', unauth))
+        ctx.session.trello_token = None
+        ctx.session.save()
+        ctx.send_message(messages.UNAUTH_SUCCESS)

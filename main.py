@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
+import config
+from bot import TrelloBot
 
-import bot
-
-bot.updater.start_polling()
+TrelloBot(config.TELEGRAM_KEY, config.TRELLO_KEY).run()
