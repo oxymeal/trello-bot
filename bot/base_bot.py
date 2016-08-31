@@ -82,8 +82,8 @@ class Dialog:
     def send_current_step(self, ctx):
         step = self.current_step
 
-        options = getattr(step, 'options', None)
-        msg = getattr(step, 'message', "...")
+        options = getattr(self, step.__name__ + '_options', None)
+        msg = getattr(self, step.__name__ + '_message', "...")
 
         ctx.send_message(msg, options=options)
 
