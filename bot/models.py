@@ -4,7 +4,7 @@ import peewee
 
 import config
 
-db = peewee.SqliteDatabase(None)
+db = peewee.SqliteDatabase(None, threadlocals=True)
 
 
 class BaseModel(peewee.Model):
