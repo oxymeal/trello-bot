@@ -109,7 +109,8 @@ class Dialog:
 class BaseBot:
     def __init__(self, key: str):
         self._key = key
-        self.updater = Updater(token=self._key)
+        self.bot = Bot(token=key)
+        self.updater = Updater(bot=self.bot)
         self.dispatcher = self.updater.dispatcher
 
         self.dialogs = {}
