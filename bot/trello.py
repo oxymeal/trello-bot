@@ -110,6 +110,41 @@ class Session:
                 for b in boards_json]
 
 
+class Webhook:
+    def __init__(self, session, id, callback_url, id_model, description=""):
+        self.session = session
+        self.id = id
+        self.callback_url = callback_url
+        self.id_model = id_model
+        self.description = description
+
+    @classmethod
+    def create(cls, session, callback_url, id_model, description=None):
+        data = {
+            'callbackURL': callback_url,
+            'idModel': id_model,
+        }
+
+        if description:
+            data['description'] = description
+
+        wh_json = session._api_post('/webhooks', data=data)
+
+        return Webhook(session, wh_json['id'], wh_json['callbackURL'], wh_json['idModel'], wh_json['description'])
+
+    @classmethod
+    def get(cls, session, id):
+        wh_json = session._api_get('/webhooks/' + id)
+
+        return Webhook(session,
+                       wh_json['id'],
+                       wh_json['callbackURL'],
+                       wh_json['idModel'],
+                       wh_json['description'])
+
+    def delete(self):
+        self.session._api_delete('/webhook/' + self.id)
+
 class Member:
     def __init__(self, session, id, username, fullname, url):
         self.session = session
