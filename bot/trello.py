@@ -126,7 +126,7 @@ class API:
 
     def add(self, **kwargs):
         json = self.session._api_post(self.url_base, data=kwargs)
-        return self.model_class.from_dict(self.session, m)
+        return self.model_class.from_dict(self.session, json)
 
 class MembersAPI(API):
     def __init__(self, session):
