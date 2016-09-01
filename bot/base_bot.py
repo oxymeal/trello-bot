@@ -28,8 +28,15 @@ class Context:
         dialog.send_current_step(self)
 
     def send_message(self, text: str, *args, **kwargs):
+        if self.message.chat.type != 'private':
+            reply_to = self.message.message_id
+        else:
+            reply_to = None
+
         self.base_bot.send_message(chat_id=self.update.message.chat_id,
-                                   text=text, *args, **kwargs)
+                                   text=text,
+                                   reply_to=reply_to,
+                                   *args, **kwargs)
 
 
 class Dialog:
@@ -128,9 +135,12 @@ class BaseBot:
         return {
             'keyboard': keyboard,
             'one_time_keyboard': True,
+            'selective': True,
         }
 
-    def send_message(self, chat_id: int, text: str, *, options: List[List[str]]=None):
+    def send_message(self, chat_id: int, text: str, *,
+                     options: List[List[str]]=None,
+                     reply_to: int=None):
         if options:
             reply_markup = self._options_to_reply_markup(options)
         else:
@@ -139,7 +149,8 @@ class BaseBot:
         self.bot.send_message(chat_id=chat_id,
                               text=text,
                               parse_mode="Markdown",
-                              reply_markup=reply_markup)
+                              reply_markup=reply_markup,
+                              reply_to_message_id=reply_to)
 
     def msg(self, ctx: Context):
         pass
