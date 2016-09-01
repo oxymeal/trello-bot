@@ -260,18 +260,24 @@ class Webhook(Model):
 class Card(Model):
     url_base = '/cards'
 
-    def __init__(self, session, id, name, id_list):
+    def __init__(self, session, id, name, id_list, short_link=None):
         self.session = session
         self.id = id
         self.name = name
         self.id_list = id_list
+        self.short_link = short_link
 
     @classmethod
     def from_dict(cls, session, d):
         return Card(session,
                     d['id'],
                     d['name'],
-                    d.get('id_list'))
+                    d.get('id_list'),
+                    d.get('shortLink'))
+
+    @property
+    def url(self):
+        return "https://trello.com/c/{}/".format(self.short_link)
 
     def list(self):
         return self.session.lists.get(self.id_list)
@@ -279,12 +285,12 @@ class Card(Model):
 class Board(Model):
     url_base = '/boards'
 
-    def __init__(self, session, id, name, desc, url):
+    def __init__(self, session, id, name, desc, short_link=None):
         self.session = session
         self.id = id
         self.name = name
         self.desc = desc
-        self.url = url
+        self.short_link = short_link
 
     @classmethod
     def from_dict(self, session, d):
@@ -292,7 +298,11 @@ class Board(Model):
                      d['id'],
                      d['name'],
                      d.get('desc'),
-                     d.get('url'))
+                     d.get('shortLink'))
+
+    @property
+    def url(self):
+        return "https://trello.com/b/{}/".format(self.short_link)
 
     def actions(self):
         json = self.session._api_get(self._sub_url('/actions'))
