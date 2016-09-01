@@ -246,3 +246,6 @@ class TrelloBot(BaseBot):
             admin_id=ctx.session.admin_id,
         )
         ctx.send_message(msg)
+
+    def cmd_help(self, ctx: Context):
+        ctx.send_message(messages.HELP)
