@@ -100,6 +100,16 @@ FORGET_SUCCESS = "Уведомления по доске успешно откл
 FORGET_CANCELLED = "Отключение доски отменено."
 
 #
+# /dev
+#
+
+DEV = """
+Сессия (=чат) *{session_id}*
+Отправитель *{sender_id}*
+Админ *{admin_id}*
+"""
+
+#
 # Notifications from Trello webhooks
 #
 

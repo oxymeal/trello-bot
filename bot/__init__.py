@@ -238,3 +238,11 @@ class TrelloBot(BaseBot):
             hook_map[b.name] = h
 
         ctx.start_dialog(ForgetHookDialog(hook_map))
+
+    def cmd_dev(self, ctx: Context):
+        msg = messages.DEV.format(
+            session_id=ctx.session.chat_id,
+            sender_id=ctx.message.from_user.id,
+            admin_id=ctx.session.admin_id,
+        )
+        ctx.send_message(msg)
