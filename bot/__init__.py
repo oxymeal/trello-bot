@@ -82,6 +82,7 @@ class ForgetHookDialog(Dialog):
         ctx.send_message(messages.FORGET_CANCELLED)
         return True
 
+
 def require_auth(fn):
     def wrapper(self, ctx, *args, **kwargs):
         if not ctx.session.trello_token:
@@ -91,6 +92,18 @@ def require_auth(fn):
     wrapper.__name__ = fn.__name__
     wrapper.__qualname__ = fn.__qualname__
     return wrapper
+
+
+def require_admin(fn):
+    def wrapper(self, ctx, *args, **kwargs):
+        if ctx.session.admin_id != ctx.message.from_user.id:
+            ctx.send_message(messages.FORBIDDEN)
+            return
+        fn(self, ctx, *args, **kwargs)
+    wrapper.__name__ = fn.__name__
+    wrapper.__qualname__ = fn.__qualname__
+    return wrapper
+
 
 class TrelloBot(BaseBot):
     def __init__(self, telegram_key: str, trello_key: trello.App):
@@ -184,6 +197,7 @@ class TrelloBot(BaseBot):
         ctx.send_message(msg)
 
     @require_auth
+    @require_admin
     def cmd_unauth(self, ctx: Context):
         ctx.session.trello_token = None
         ctx.session.admin_id = None
@@ -191,6 +205,7 @@ class TrelloBot(BaseBot):
         ctx.send_message(messages.UNAUTH_SUCCESS)
 
     @require_auth
+    @require_admin
     def cmd_notify(self, ctx: Context):
         boards = ctx.trello_session.members.me().boards(filter='open')
         ctx.start_dialog(AddHookDialog(boards))
@@ -214,6 +229,7 @@ class TrelloBot(BaseBot):
         ctx.send_message(msg)
 
     @require_auth
+    @require_admin
     def cmd_forget(self, ctx: Context):
         hooks = ctx.session.hooks.execute()
         hook_map = {}
