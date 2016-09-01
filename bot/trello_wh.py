@@ -19,7 +19,7 @@ class WebhookReciever:
 
         self.flask = Flask(__name__)
         self.flask.add_url_rule(self.update_url, view_func=self.webhook_update,
-                                methods=['POST'])
+                                methods=['POST', 'HEAD'])
 
         self.flask_process = None
 
