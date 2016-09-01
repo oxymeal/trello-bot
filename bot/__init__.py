@@ -9,6 +9,16 @@ logging.basicConfig(
     level=logging.INFO)
 
 
+def require_auth(fn):
+    def wrapper(self, ctx, *args, **kwargs):
+        if not ctx.session.trello_token:
+            ctx.send_message(messages.MUST_AUTH)
+            return
+        fn(self, ctx, *args, **kwargs)
+    wrapper.__name__ = fn.__name__
+    wrapper.__qualname__ = fn.__qualname__
+    return wrapper
+
 class TrelloBot(BaseBot):
     def __init__(self, telegram_key: str, trello_key: trello.App):
         self.trello = trello.App(trello_key)
@@ -45,11 +55,8 @@ class TrelloBot(BaseBot):
         msg = messages.AUTH_SUCCESS.format(fullname=me.fullname)
         ctx.send_message(msg)
 
+    @require_auth
     def cmd_status(self, ctx: Context):
-        if not ctx.session.trello_token:
-            ctx.send_message(messages.STATUS_UNAUTH)
-            return
-
         try:
             me = ctx.trello.members.me()
         except trello.AuthError:
@@ -59,11 +66,8 @@ class TrelloBot(BaseBot):
         msg = messages.STATUS_OK.format(fullname=me.fullname)
         ctx.send_message(msg)
 
+    @require_auth
     def cmd_unauth(self, ctx: Context):
-        if not ctx.session.trello_token:
-            ctx.send_message(messages.UNAUTH_ALREADY)
-            return
-
         ctx.session.trello_token = None
         ctx.session.save()
         ctx.send_message(messages.UNAUTH_SUCCESS)
