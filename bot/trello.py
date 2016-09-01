@@ -225,6 +225,10 @@ class Action(Model):
             action.board = Board.from_dict(session, data['board'])
         if 'list' in data:
             action.list = List.from_dict(session, data['list'])
+        if 'listBefore' in data:
+            action.list_before = List.from_dict(session, data['listBefore'])
+        if 'listAfter' in data:
+            action.list_after = List.from_dict(session, data['listAfter'])
         if 'card' in data:
             action.card = Card.from_dict(session, data['card'])
             if hasattr(action, 'list'):
