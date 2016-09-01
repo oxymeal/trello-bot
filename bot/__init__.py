@@ -199,9 +199,9 @@ class TrelloBot(BaseBot):
     @require_auth
     @require_admin
     def cmd_unauth(self, ctx: Context):
-        ctx.session.trello_token = None
-        ctx.session.admin_id = None
-        ctx.session.save()
+        models.BoardHook.delete().where(
+            models.BoardHook.session == ctx.session).execute()
+        ctx.session.delete_instance()
         ctx.send_message(messages.UNAUTH_SUCCESS)
 
     @require_auth
