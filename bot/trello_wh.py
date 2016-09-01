@@ -30,6 +30,9 @@ class WebhookReciever:
             url=self.update_url.replace('<chat_id>', str(chat_id)))
 
     def webhook_update(self, chat_id):
+        if request.method == 'HEAD':
+            return "OK"
+
         try:
             session = Session.get(Session.chat_id == chat_id)
         except Session.DoesNotExist:
