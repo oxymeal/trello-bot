@@ -27,29 +27,9 @@ class Context:
         self.base_bot._start_dialog_for(self.chat_id, dialog)
         dialog.send_current_step(self)
 
-    def _options_to_reply_markup(self, options: List[List[str]]):
-        keyboard = []
-
-        for row in options:
-            if isinstance(row, str):
-                row = [row]
-            keyboard.append([{'text': o} for o in row])
-
-        return {
-            'keyboard': keyboard,
-            'one_time_keyboard': True,
-        }
-
-    def send_message(self, text: str, *, options: List[List[str]]=None):
-        if options:
-            reply_markup = self._options_to_reply_markup(options)
-        else:
-            reply_markup = {'hide_keyboard': True}
-
-        self.bot.send_message(chat_id=self.update.message.chat_id,
-                              text=text,
-                              parse_mode="Markdown",
-                              reply_markup=reply_markup)
+    def send_message(self, text: str, *args, **kwargs):
+        self.base_bot.send_message(chat_id=self.update.message.chat_id,
+                                   text=text, *args, **kwargs)
 
 
 class Dialog:
@@ -136,6 +116,30 @@ class BaseBot:
 
     def _start_dialog_for(self, chat_id, dialog):
         self.dialogs[chat_id] = dialog
+
+    def _options_to_reply_markup(self, options: List[List[str]]):
+        keyboard = []
+
+        for row in options:
+            if isinstance(row, str):
+                row = [row]
+            keyboard.append([{'text': o} for o in row])
+
+        return {
+            'keyboard': keyboard,
+            'one_time_keyboard': True,
+        }
+
+    def send_message(self, chat_id: int, text: str, *, options: List[List[str]]=None):
+        if options:
+            reply_markup = self._options_to_reply_markup(options)
+        else:
+            reply_markup = {'hide_keyboard': True}
+
+        self.bot.send_message(chat_id=chat_id,
+                              text=text,
+                              parse_mode="Markdown",
+                              reply_markup=reply_markup)
 
     def msg(self, ctx: Context):
         pass
