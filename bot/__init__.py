@@ -116,14 +116,7 @@ class TrelloBot(BaseBot):
     def cmd_start(self, ctx: Context):
         ctx.send_message(messages.START)
 
-    def cmd_auth(self, ctx: Context):
-        try:
-            token = ctx.args[0]
-        except IndexError:
-            msg = messages.AUTH_URL.format(url=self.trello_app.auth_url())
-            ctx.send_message(msg)
-            return
-
+    def _cmd_auth_with_token(self, ctx: Context, token: str):
         try:
             me = self.trello_app.session(token).members.me()
         except trello.AuthError:
@@ -135,6 +128,44 @@ class TrelloBot(BaseBot):
 
         msg = messages.AUTH_SUCCESS.format(fullname=me.fullname)
         ctx.send_message(msg)
+
+    def _cmd_auth_group(self, ctx: Context):
+        try:
+            private_session = models.Session.get(chat_id=ctx.message.from_user.id)
+
+            if not private_session.trello_token:
+                raise PermissionError('no token')
+
+            trello_session = self.trello_app.session(private_session.trello_token)
+            me = trello_session.members.me()
+
+            ctx.session.trello_token = private_session.trello_token
+            ctx.session.save()
+
+            msg = messages.AUTH_SUCCESS.format(fullname=me.fullname)
+            ctx.send_message(msg)
+
+        except (models.Session.DoesNotExist, PermissionError, trello.AuthError):
+            ctx.send_message(messages.AUTH_GO_PRIVATE)
+
+    def cmd_auth(self, ctx: Context):
+        if ctx.session.trello_token:
+            ctx.send_message(messages.AUTH_ALREADY)
+            return
+
+        if ctx.message.chat.type != 'private':
+            self._cmd_auth_group(ctx)
+            return
+
+        try:
+            self._cmd_auth_with_token(ctx, ctx.args[0])
+            return
+        except IndexError:
+            pass
+
+        msg = messages.AUTH_URL.format(url=self.trello_app.auth_url())
+        ctx.send_message(msg)
+
 
     @require_auth
     def cmd_status(self, ctx: Context):
