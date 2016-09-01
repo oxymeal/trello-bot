@@ -34,7 +34,7 @@ class TrelloBot(BaseBot):
             return
 
         try:
-            me = self.trello.session(token).me()
+            me = self.trello.session(token).members.me()
         except trello.AuthError:
             ctx.send_message(messages.AUTH_FAILURE)
             return
@@ -51,7 +51,7 @@ class TrelloBot(BaseBot):
             return
 
         try:
-            me = ctx.trello.me()
+            me = ctx.trello.members.me()
         except trello.AuthError:
             ctx.send_message(messages.STATUS_INVALID_TOKEN)
             return

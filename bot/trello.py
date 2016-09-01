@@ -23,7 +23,6 @@ class TrelloError(Exception):
                                  status_code=status_code,
                                  display_text=display_text))
 
-
 class CustomTrelloError(TrelloError):
     status_code = 0
     desc = ""
@@ -68,6 +67,14 @@ class Session:
         self.app = app
         self.token = token
 
+        self.members = MembersAPI(self)
+        self.actions = ActionsAPI(self)
+        self.webhooks = WebhooksAPI(self)
+
+        self.boards = BoardsAPI(self)
+        self.lists = ListsAPI(self)
+        self.cards = CardsAPI(self)
+
     def _api_request(self, method, url, params=None, data=None):
         if params is None: params = {}
 
@@ -99,53 +106,76 @@ class Session:
     def _api_delete(self, url, *, params=None):
         return self._api_request('delete', url, params)
 
+
+class API:
+    def __init__(self, session, model_class):
+        self.session = session
+        self.model_class = model_class
+
+    @property
+    def url_base(self):
+        return self.model_class.url_base
+
+    def all(self):
+        json = self.session._api_get(self.url_base)
+        return [self.model_class.from_dict(self.session, m) for m in json]
+
+    def get(self, id):
+        json = self.session._api_get(self.url_base + '/' + id)
+        return self.model_class.from_dict(self.session, json)
+
+    def add(self, **kwargs):
+        json = self.session._api_post(self.url_base, data=kwargs)
+        return self.model_class.from_dict(self.session, m)
+
+class MembersAPI(API):
+    def __init__(self, session):
+        super().__init__(session, Member)
+
     def me(self):
-        me_json = self._api_get('/members/me')
-        return Member(self, me_json['id'], me_json['username'],
-                      me_json['fullName'], me_json['url'])
+        json = self.session._api_get(self.url_base + '/me')
+        return Member.from_dict(self.session, json)
 
-    def boards(self):
-        boards_json = self._api_get('/member/me/boards')
-        return [Board(self, b['id'], b['name'], b['desc'], b['url'])
-                for b in boards_json]
+class ActionsAPI(API):
+    def __init__(self, session):
+        super().__init__(session, Action)
 
+class WebhooksAPI(API):
+    def __init__(self, session):
+        super().__init__(session, Webhook)
 
-class Webhook:
-    def __init__(self, session, id, callback_url, id_model, description=""):
+class BoardsAPI(API):
+    def __init__(self, session):
+        super().__init__(session, Board)
+
+class ListsAPI(API):
+    def __init__(self, session):
+        super().__init__(session, List)
+
+class CardsAPI(API):
+    def __init__(self, session):
+        super().__init__(session, Card)
+
+class Model:
+    url_base = ''
+
+    def __init__(self, session, id):
         self.session = session
         self.id = id
-        self.callback_url = callback_url
-        self.id_model = id_model
-        self.description = description
 
     @classmethod
-    def create(cls, session, callback_url, id_model, description=None):
-        data = {
-            'callbackURL': callback_url,
-            'idModel': id_model,
-        }
+    def from_dict(cls, session, d):
+        return Model(session, d['id'])
 
-        if description:
-            data['description'] = description
-
-        wh_json = session._api_post('/webhooks', data=data)
-
-        return Webhook(session, wh_json['id'], wh_json['callbackURL'], wh_json['idModel'], wh_json['description'])
-
-    @classmethod
-    def get(cls, session, id):
-        wh_json = session._api_get('/webhooks/' + id)
-
-        return Webhook(session,
-                       wh_json['id'],
-                       wh_json['callbackURL'],
-                       wh_json['idModel'],
-                       wh_json['description'])
+    def _sub_url(self, url):
+        return "{base}/{id}{url}".format(base=self.url_base, id=self.id, url=url)
 
     def delete(self):
-        self.session._api_delete('/webhook/' + self.id)
+        self._api_delete(self.url_base + '/' + self.id)
 
-class Member:
+class Member(Model):
+    url_base = '/members'
+
     def __init__(self, session, id, username, fullname, url):
         self.session = session
         self.id = id
@@ -153,8 +183,102 @@ class Member:
         self.fullname = fullname
         self.url = url
 
+    @classmethod
+    def from_dict(cls, session, d):
+        return Member(session,
+                      d['id'],
+                      d['username'],
+                      d.get('fullName'),
+                      d.get('url'))
 
-class Board:
+    def boards(self, *, filter=None):
+        params = {}
+
+        if filter:
+            if isinstance(filter, list):
+                filter = ','.join(filter)
+            params['filter'] = filter
+
+        json = self.session._api_get(self._sub_url('/boards'), params=params)
+        return [Board.from_dict(self.session, d) for d in json]
+
+class Action(Model):
+    url_base = '/actions'
+
+    def __init__(self, session, id, id_member_creator, type,
+                 changed_field=None, old_value=None):
+        super().__init__(session, id)
+
+        self.id_member_creator = id_member_creator
+        self.type = type
+
+        if changed_field:
+            self.changed_field = changed_field
+            self.old_value = old_value
+
+    @classmethod
+    def from_dict(cls, session, d):
+        action = Action(session, d['id'], d['idMemberCreator'], d['type'])
+
+        data = d['data']
+        if 'board' in data:
+            action.board = Board.from_dict(session, data['board'])
+        if 'list' in data:
+            action.list = List.from_dict(session, data['list'])
+        if 'card' in data:
+            action.card = Card.from_dict(session, data['card'])
+            if hasattr(action, 'list'):
+                action.card.id_list = action.list.id
+
+        if 'old' in data:
+            action.changed_field = list(data['old'].keys())[0]
+            action.old_value = data['old'][action.changed_field]
+
+        return action
+
+    def member_creator(self):
+        return self.session.members.get(self.id_member_creator)
+
+class Webhook(Model):
+    url_base = '/webhooks'
+
+    def __init__(self, session, id, callback_url, id_model, description=""):
+        super().__init__(session, id)
+
+        self.callback_url = callback_url
+        self.id_model = id_model
+        self.description = description
+
+    @classmethod
+    def from_dict(cls, session, d):
+        return Webhook(session,
+                       d['id'],
+                       d['callbackURL'],
+                       d['idModel'],
+                       d.get('description'))
+
+class Card(Model):
+    url_base = '/cards'
+
+    def __init__(self, session, id, name, id_list):
+        self.session = session
+        self.id = id
+        self.name = name
+        self.id_list = id_list
+
+    @classmethod
+    def from_dict(cls, session, d):
+        return Card(session,
+                    d['id'],
+                    d['name'],
+                    d.get('id_list'))
+
+    def list(self):
+        return self.session.lists.get(self.id_list)
+
+class Board(Model):
+    url_base = '/boards'
+
     def __init__(self, session, id, name, desc, url):
         self.session = session
         self.id = id
@@ -162,13 +286,46 @@ class Board:
         self.desc = desc
         self.url = url
 
+    @classmethod
+    def from_dict(self, session, d):
+        return Board(session,
+                     d['id'],
+                     d['name'],
+                     d.get('desc'),
+                     d.get('url'))
+
+    def actions(self):
+        json = self.session._api_get(self._sub_url('/actions'))
+        return [Action.from_dict(self.session, d) for d in json]
+
     def lists(self):
-        lists_json = self.session._api_get('/boards/{}/lists'.format(self.id))
-        return [List(self.session, l['id'], l['name']) for l in lists_json]
+        json = self.session._api_get(self._sub_url('/lists'))
+        return [List.from_dict(self.session, d) for d in json]
 
 
-class List:
+class List(Model):
+    url_base = '/lists'
+
     def __init__(self, session, id, name):
         self.session = session
         self.id = id
         self.name = name
+
+    @classmethod
+    def from_dict(self, session, d):
+        return List(session,
+                     d['id'],
+                     d['name'])
+
+    def board(self):
+        json = self.session._api_get(self._sub_url('/board'))
+        return Board.from_dict(self.session, json)
+
+    def cards(self):
+        json = self.session._api_get(self._sub_url('/cards'))
+
+        cs = [Card.from_dict(self.session, d) for d in json]
+        for c in cs:
+            c.id_list = self.id
+
+        return cs
