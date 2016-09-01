@@ -21,14 +21,14 @@ def require_auth(fn):
 
 class TrelloBot(BaseBot):
     def __init__(self, telegram_key: str, trello_key: trello.App):
-        self.trello = trello.App(trello_key)
+        self.trello_app = trello.App(trello_key)
         super().__init__(telegram_key)
 
     def wrap_context(self, ctx: Context):
         (ctx.session, _) = models.Session.get_or_create(chat_id=ctx.chat_id)
 
         if ctx.session.trello_token:
-            ctx.trello = self.trello.session(ctx.session.trello_token)
+            ctx.trello_session = self.trello_app.session(ctx.session.trello_token)
 
         return ctx
 
@@ -39,12 +39,12 @@ class TrelloBot(BaseBot):
         try:
             token = ctx.args[0]
         except IndexError:
-            msg = messages.AUTH_URL.format(url=self.trello.auth_url())
+            msg = messages.AUTH_URL.format(url=self.trello_app.auth_url())
             ctx.send_message(msg)
             return
 
         try:
-            me = self.trello.session(token).members.me()
+            me = self.trello_app.session(token).members.me()
         except trello.AuthError:
             ctx.send_message(messages.AUTH_FAILURE)
             return
@@ -58,7 +58,7 @@ class TrelloBot(BaseBot):
     @require_auth
     def cmd_status(self, ctx: Context):
         try:
-            me = ctx.trello.members.me()
+            me = ctx.trello_session.members.me()
         except trello.AuthError:
             ctx.send_message(messages.STATUS_INVALID_TOKEN)
             return
