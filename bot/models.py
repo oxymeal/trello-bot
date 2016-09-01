@@ -14,6 +14,7 @@ class BaseModel(peewee.Model):
 
 class Session(BaseModel):
     chat_id = peewee.IntegerField(primary_key=True)
+    admin_id = peewee.IntegerField(null=True)
     trello_token = peewee.CharField(null=True)
 
 

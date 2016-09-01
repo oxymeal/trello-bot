@@ -124,6 +124,7 @@ class TrelloBot(BaseBot):
             return
 
         ctx.session.trello_token = token
+        ctx.session.admin_id = ctx.message.from_user.id
         ctx.session.save()
 
         msg = messages.AUTH_SUCCESS.format(fullname=me.fullname)
@@ -140,6 +141,7 @@ class TrelloBot(BaseBot):
             me = trello_session.members.me()
 
             ctx.session.trello_token = private_session.trello_token
+            ctx.session.admin_id = ctx.message.from_user.id
             ctx.session.save()
 
             msg = messages.AUTH_SUCCESS.format(fullname=me.fullname)
@@ -175,12 +177,16 @@ class TrelloBot(BaseBot):
             ctx.send_message(messages.STATUS_INVALID_TOKEN)
             return
 
-        msg = messages.STATUS_OK.format(fullname=me.fullname)
+        admin = ctx.bot.get_chat(ctx.session.admin_id)
+
+        msg = messages.STATUS_OK.format(fullname=me.fullname,
+                                        admin=admin.first_name + ' ' + admin.last_name)
         ctx.send_message(msg)
 
     @require_auth
     def cmd_unauth(self, ctx: Context):
         ctx.session.trello_token = None
+        ctx.session.admin_id = None
         ctx.session.save()
         ctx.send_message(messages.UNAUTH_SUCCESS)
 

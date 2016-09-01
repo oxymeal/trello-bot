@@ -47,7 +47,8 @@ STATUS_INVALID_TOKEN = """
 Используйте /unauth, чтобы удалить сессию, а затем /auth, чтобы пройти авторизацию заново.
 """
 
-STATUS_OK = "Этот чат авторизован от имени *{fullname}*."
+STATUS_OK = "Этот чат использует аккаунт Trello *{fullname}*, \
+по авторизации пользователя Telegram *{admin}*"
 
 #
 # /unauth
