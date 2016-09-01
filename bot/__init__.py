@@ -1,7 +1,8 @@
 import logging
 from typing import *
 
-from bot import models, trello, messages
+import config
+from bot import models, trello, messages, trello_wh
 from bot.base_bot import BaseBot, Context, Dialog
 
 logging.basicConfig(
@@ -24,6 +25,15 @@ class AddHookDialog(Dialog):
         except KeyError:
             ctx.send_message(messages.NOTIFY_NOBOARD)
             return False
+
+        try:
+            ctx.trello_session.webhooks.add(
+                callbackURL=ctx.base_bot.wh_reciever.callback_url(ctx.chat_id),
+                idModel=board.id,
+            )
+        except trello.TrelloError as e:
+            ctx.send_message('```' + str(e) + '```')
+            return True
 
         (hook, created) = models.BoardHook.get_or_create(session=ctx.session, board_id=board.id)
         if not created:
@@ -82,8 +92,16 @@ def require_auth(fn):
 
 class TrelloBot(BaseBot):
     def __init__(self, telegram_key: str, trello_key: trello.App):
-        self.trello_app = trello.App(trello_key)
         super().__init__(telegram_key)
+
+        self.trello_app = trello.App(trello_key)
+
+        self.wh_reciever = trello_wh.WebhookReciever(
+            self, config.TRELLO_WH_HOST, config.TRELLO_WH_PORT)
+
+    def run(self):
+        self.wh_reciever.start()
+        super().run()
 
     def wrap_context(self, ctx: Context):
         (ctx.session, _) = models.Session.get_or_create(chat_id=ctx.chat_id)

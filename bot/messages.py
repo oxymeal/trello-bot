@@ -86,3 +86,32 @@ FORGET_NOBOARD = "Такой доски нет, пожалуйсте выбер�
 FORGET_SUCCESS = "Уведомления по доске успешно отключены."
 
 FORGET_CANCELLED = "Отключение доски отменено."
+
+#
+# Notifications from Trello webhooks
+#
+
+HOOK_CARD_CREATED = """
+_{user_name}_ создал карточку
+*{card_text}* ([ссылка]({card_url}))
+в списке _{list_name}_
+
+на доске [{board_name}]({board_url})
+"""
+
+HOOK_CARD_MOVED = """
+_{user_name}_ переместил карточку
+*{card_text}* ([ссылка]({card_url}))
+из списка _{old_list_name}_
+в список _{new_list_name}_
+
+на доске [{board_name}]({board_url})
+"""
+
+HOOK_CARD_ARCHIVED = """
+_{user_name}_ заархивировал карточку
+*{card_text}* ([ссылка]({card_url}))
+из списка _{list_name}_
+
+на доске [{board_name}]({board_url})
+"""
