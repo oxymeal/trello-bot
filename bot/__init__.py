@@ -32,8 +32,10 @@ class AddHookDialog(Dialog):
                 idModel=board.id,
             )
         except trello.TrelloError as e:
-            ctx.send_message('```' + str(e) + '```')
-            return True
+            text = str(e)
+            if 'already exists' not in text:
+                ctx.send_message('```' + text + '```')
+                return True
 
         (hook, created) = models.BoardHook.get_or_create(session=ctx.session, board_id=board.id)
         if not created:
