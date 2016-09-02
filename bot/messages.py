@@ -158,3 +158,40 @@ _{user_name}_ заархивировал карточку
 
 на доске [{board_name}]({board_url})
 """
+
+HOOK_CARD_COMMENTED = """
+_{user_name}_ прокомментировал карточку
+*{card_text}* ([ссылка]({card_url}))
+
+{text}
+
+на доске [{board_name}]({board_url})
+"""
+
+HOOK_CARD_MEMBER_ADDED = """
+_{user_name}_ добавил _{other_user_name}_ к карточке
+*{card_text}* ([ссылка]({card_url}))
+
+на доске [{board_name}]({board_url})
+"""
+
+HOOK_CARD_SELF_ADDED = """
+_{user_name}_ добавил себя к карточке
+*{card_text}* ([ссылка]({card_url}))
+
+на доске [{board_name}]({board_url})
+"""
+
+HOOK_CARD_MEMBER_REMOVED = """
+_{user_name}_ удалил _{other_user_name}_ из карточки
+*{card_text}* ([ссылка]({card_url}))
+
+на доске [{board_name}]({board_url})
+"""
+
+HOOK_CARD_SELF_REMOVED = """
+_{user_name}_ удалил себя из карточки
+*{card_text}* ([ссылка]({card_url}))
+
+на доске [{board_name}]({board_url})
+"""
