@@ -187,7 +187,7 @@ class Member(Model):
     def from_dict(cls, session, d):
         return Member(session,
                       d['id'],
-                      d['username'],
+                      d.get('username'),
                       d.get('fullName'),
                       d.get('url'))
 
@@ -233,6 +233,14 @@ class Action(Model):
             action.card = Card.from_dict(session, data['card'])
             if hasattr(action, 'list'):
                 action.card.id_list = action.list.id
+        if 'text' in data:
+            action.text = data['text']
+
+        if 'member' in d:
+            action.member = Member.from_dict(session, d['member'])
+
+        if 'memberCreator' in d:
+            action._member_creator = Member.from_dict(session, d['memberCreator'])
 
         if 'old' in data:
             action.changed_field = list(data['old'].keys())[0]
@@ -241,6 +249,9 @@ class Action(Model):
         return action
 
     def member_creator(self):
+        if hasattr(self, '_member_creator'):
+            return self._member_creator
+
         return self.session.members.get(self.id_member_creator)
 
 class Webhook(Model):
