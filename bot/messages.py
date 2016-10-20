@@ -135,63 +135,62 @@ HELP = """
 #
 
 HOOK_CARD_CREATED = """
-_{user_name}_ создал карточку
-*{card_text}* ([ссылка]({card_url}))
-в списке _{list_name}_
+[{board_name}]({board_url})
 
-на доске [{board_name}]({board_url})
+*{user_name}* добавил
+💳[{card_text}]({card_url})
+в 🗒_{list_name}_
 """
 
 HOOK_CARD_MOVED = """
-_{user_name}_ переместил карточку
-*{card_text}* ([ссылка]({card_url}))
-из списка _{old_list_name}_
-в список _{new_list_name}_
+[{board_name}]({board_url})
 
-на доске [{board_name}]({board_url})
+*{user_name}* переместил
+💳[{card_text}]({card_url})
+из 🗒_{old_list_name}_ ➡️ в 🗒_{new_list_name}_
 """
 
 HOOK_CARD_ARCHIVED = """
-_{user_name}_ заархивировал карточку
-*{card_text}* ([ссылка]({card_url}))
-из списка _{list_name}_
+[{board_name}]({board_url})
 
-на доске [{board_name}]({board_url})
+*{user_name}* заархивировал
+💳[{card_text}]({card_url})
+из 🗒_{list_name}_
 """
 
 HOOK_CARD_COMMENTED = """
-_{user_name}_ прокомментировал карточку
-*{card_text}* ([ссылка]({card_url}))
+[{board_name}]({board_url})
+
+*{user_name}* прокомментировал
+💳[{card_text}]({card_url})
 
 {text}
-
-на доске [{board_name}]({board_url})
 """
 
 HOOK_CARD_MEMBER_ADDED = """
-_{user_name}_ добавил _{other_user_name}_ к карточке
-*{card_text}* ([ссылка]({card_url}))
+[{board_name}]({board_url})
 
-на доске [{board_name}]({board_url})
+*{user_name}* добавил *{user_name}* к
+💳[{card_text}]({card_url})
 """
 
 HOOK_CARD_SELF_ADDED = """
-_{user_name}_ добавил себя к карточке
-*{card_text}* ([ссылка]({card_url}))
+[{board_name}]({board_url})
 
-на доске [{board_name}]({board_url})
+*{user_name}* добавил себя к
+💳[{card_text}]({card_url})
 """
 
 HOOK_CARD_MEMBER_REMOVED = """
-_{user_name}_ удалил _{other_user_name}_ из карточки
-*{card_text}* ([ссылка]({card_url}))
+[{board_name}]({board_url})
 
-на доске [{board_name}]({board_url})
+*{user_name}* удалил _{other_user_name}_ из
+💳[{card_text}]({card_url})
 """
 
 HOOK_CARD_SELF_REMOVED = """
-_{user_name}_ удалил себя из карточки
-*{card_text}* ([ссылка]({card_url}))
+[{board_name}]({board_url})
 
-на доске [{board_name}]({board_url})
+*{user_name}* удалил себя из
+💳[{card_text}]({card_url})
 """
