@@ -170,7 +170,7 @@ HOOK_CARD_COMMENTED = """
 HOOK_CARD_MEMBER_ADDED = """
 [{board_name}]({board_url})
 
-*{user_name}* добавил *{user_name}* к
+*{user_name}* добавил *{other_user_name}* к
 💳[{card_text}]({card_url})
 """
 
