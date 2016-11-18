@@ -184,7 +184,7 @@ HOOK_CARD_SELF_ADDED = """
 HOOK_CARD_MEMBER_REMOVED = """
 [{board_name}]({board_url})
 
-*{user_name}* удалил _{other_user_name}_ из
+*{user_name}* удалил *{other_user_name}* из
 💳[{card_text}]({card_url})
 """
 
