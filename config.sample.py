@@ -7,3 +7,6 @@ DB_FILE = 'bot.sqlite'
 
 TRELLO_WH_HOST = 'example.com'
 TRELLO_WH_PORT = 9099
+
+# In seconds
+NOTIFICATION_LAG = 5

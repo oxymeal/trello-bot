@@ -134,33 +134,31 @@ HELP = """
 # Notifications from Trello webhooks
 #
 
-HOOK_CARD_CREATED = """
+HOOK_WRAP = """
 [{board_name}]({board_url})
 
+{message}
+"""
+
+HOOK_CARD_CREATED = """
 *{user_name}* добавил
 💳[{card_text}]({card_url})
 в 🗒_{list_name}_
 """
 
 HOOK_CARD_MOVED = """
-[{board_name}]({board_url})
-
 *{user_name}* переместил
 💳[{card_text}]({card_url})
 из 🗒_{old_list_name}_ ➡️ в 🗒_{new_list_name}_
 """
 
 HOOK_CARD_ARCHIVED = """
-[{board_name}]({board_url})
-
 *{user_name}* заархивировал
 💳[{card_text}]({card_url})
 из 🗒_{list_name}_
 """
 
 HOOK_CARD_COMMENTED = """
-[{board_name}]({board_url})
-
 *{user_name}* прокомментировал
 💳[{card_text}]({card_url})
 
@@ -168,29 +166,21 @@ HOOK_CARD_COMMENTED = """
 """
 
 HOOK_CARD_MEMBER_ADDED = """
-[{board_name}]({board_url})
-
 *{user_name}* добавил *{other_user_name}* к
 💳[{card_text}]({card_url})
 """
 
 HOOK_CARD_SELF_ADDED = """
-[{board_name}]({board_url})
-
 *{user_name}* добавил себя к
 💳[{card_text}]({card_url})
 """
 
 HOOK_CARD_MEMBER_REMOVED = """
-[{board_name}]({board_url})
-
 *{user_name}* удалил *{other_user_name}* из
 💳[{card_text}]({card_url})
 """
 
 HOOK_CARD_SELF_REMOVED = """
-[{board_name}]({board_url})
-
 *{user_name}* удалил себя из
 💳[{card_text}]({card_url})
 """
