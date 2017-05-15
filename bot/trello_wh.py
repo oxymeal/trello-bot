@@ -1,4 +1,5 @@
 import time
+import logging
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from multiprocessing import Process
@@ -11,6 +12,8 @@ from bot import trello, messages
 from bot.models import BoardHook, Session
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
+
 
 class MessageQueue:
 
@@ -175,21 +178,25 @@ class WebhookReciever:
         return chat_queues[board.id]
 
     def webhook_update(self, chat_id):
+        logger.info("Webhook update, chat id {}.".format(chat_id))
         if request.method == 'HEAD':
             return "OK"
 
         try:
             session = Session.get(Session.chat_id == chat_id)
         except Session.DoesNotExist:
+            logger.error("No session was found for chat_id {}.".format(chat_id))
             abort(404, 'No session with that chat id is found')
 
         data = request.json
         if not data:
+            logger.error("No json was found in update of chat_id {}.".format(chat_id))
             abort(400, 'Request must contain json data')
 
         try:
             id_model = data["model"]["id"]
         except (KeyError, TypeError):
+            logger.error("No .model.id field was found in update of chat_id {}.".format(chat_id))
             abort(400, '.model.id field is required')
 
         for h in session.hooks:
@@ -200,6 +207,7 @@ class WebhookReciever:
             # Trello will automatically delete the webhook,
             # when they recieve status 410.
             # Source: https://developers.trello.com/apis/webhooks
+            logger.error("No webhook was found for update of chat_id {}.".format(chat_id))
             abort(410, 'Such hook does not exist')
 
         trello_session = self.app.session(session.trello_token)
@@ -207,6 +215,9 @@ class WebhookReciever:
         try:
             action = trello.Action.from_dict(trello_session, data['action'])
         except (KeyError, TypeError) as e:
+            logger.error(
+                "Could not parse action json in update for chat_id {}: {}.".format(
+                    chat_id, repr(e)))
             abort(400, '.action object is invalid')
 
         msg = self._action_to_msg(action)
@@ -220,6 +231,8 @@ class WebhookReciever:
         return "OK"
 
     def start(self):
+        logger.info("Starting webhook receiver in host {}, port {}.".format(
+            self.host, self.port))
         self.flask_process = Process(target=self.flask.run,
                                      kwargs={'host': self.host, 'port': self.port})
         self.flask_process.start()
@@ -228,5 +241,6 @@ class WebhookReciever:
         if not self.flask_process:
             return
 
+        logger.info("Stopping webhook receiver.")
         self.flask_process.terminate()
         self.flask_process = None
