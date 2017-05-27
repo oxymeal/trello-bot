@@ -82,88 +82,81 @@ class WebhookReciever:
 
     @staticmethod
     def _action_to_msg(action):
-        user = action.member_creator()
-        board = action.board
-        list = getattr(action, 'list', None)
-        card = action.card
-        msg = None
-
         if action.type == 'createCard':
             msg = messages.HOOK_CARD_CREATED.format(
-                user_name=user.fullname,
-                card_text=card.name,
-                card_url=card.url,
-                list_name=list.name,
-                board_name=board.name,
-                board_url=board.url,
+                user_name=action.user.fullname,
+                card_text=action.card.name,
+                card_url=action.card.url,
+                list_name=action.list.name,
+                board_name=action.board.name,
+                board_url=action.board.url,
             )
         elif action.type == 'updateCard' and action.changed_field == 'idList':
-            old_list = action.list_before
-            new_list = action.list_after
-
             msg = messages.HOOK_CARD_MOVED.format(
-                user_name=user.fullname,
-                card_text=card.name,
-                card_url=card.url,
-                old_list_name=old_list.name,
-                new_list_name=new_list.name,
-                board_name=board.name,
-                board_url=board.url,
+                user_name=action.user.fullname,
+                card_text=action.card.name,
+                card_url=action.card.url,
+                old_list_name=action.list_before.name,
+                new_list_name=action.list_after.name,
+                board_name=action.board.name,
+                board_url=action.board.url,
             )
         elif action.type == 'updateCard' and action.changed_field == 'closed':
             msg = messages.HOOK_CARD_ARCHIVED.format(
-                user_name=user.fullname,
-                card_text=card.name,
-                card_url=card.url,
-                list_name=list.name,
-                board_name=board.name,
-                board_url=board.url,
+                user_name=action.user.fullname,
+                card_text=action.card.name,
+                card_url=action.card.url,
+                list_name=action.list.name,
+                board_name=action.board.name,
+                board_url=action.board.url,
             )
         elif action.type == 'commentCard':
             msg = messages.HOOK_CARD_COMMENTED.format(
-                user_name=user.fullname,
-                card_text=card.name,
-                card_url=card.url,
+                user_name=action.user.fullname,
+                card_text=action.card.name,
+                card_url=action.card.url,
                 text=action.text,
-                board_name=board.name,
-                board_url=board.url,
+                board_name=action.board.name,
+                board_url=action.board.url,
             )
         elif action.type == 'addMemberToCard':
             if action.member.id == user.id:
                 msg = messages.HOOK_CARD_SELF_ADDED.format(
-                    user_name=user.fullname,
-                    card_text=card.name,
-                    card_url=card.url,
-                    board_name=board.name,
-                    board_url=board.url,
+                    user_name=action.user.fullname,
+                    card_text=action.card.name,
+                    card_url=action.card.url,
+                    board_name=action.board.name,
+                    board_url=action.board.url,
                 )
             else:
                 msg = messages.HOOK_CARD_MEMBER_ADDED.format(
-                    user_name=user.fullname,
+                    user_name=action.user.fullname,
                     other_user_name=action.member.fullname,
-                    card_text=card.name,
-                    card_url=card.url,
-                    board_name=board.name,
-                    board_url=board.url,
+                    card_text=action.card.name,
+                    card_url=action.card.url,
+                    board_name=action.board.name,
+                    board_url=action.board.url,
                 )
         elif action.type == 'removeMemberFromCard':
             if action.member.id == user.id:
                 msg = messages.HOOK_CARD_SELF_REMOVED.format(
-                    user_name=user.fullname,
-                    card_text=card.name,
-                    card_url=card.url,
-                    board_name=board.name,
-                    board_url=board.url,
+                    user_name=action.user.fullname,
+                    card_text=action.card.name,
+                    card_url=action.card.url,
+                    board_name=action.board.name,
+                    board_url=action.board.url,
                 )
             else:
                 msg = messages.HOOK_CARD_MEMBER_REMOVED.format(
-                    user_name=user.fullname,
+                    user_name=action.user.fullname,
                     other_user_name=action.member.fullname,
-                    card_text=card.name,
-                    card_url=card.url,
-                    board_name=board.name,
-                    board_url=board.url,
+                    card_text=action.card.name,
+                    card_url=action.card.url,
+                    board_name=action.board.name,
+                    board_url=action.board.url,
                 )
+        else:
+            raise RuntimeError("Messages for this actions are not supported.")
 
         return msg
 
@@ -220,10 +213,9 @@ class WebhookReciever:
                     chat_id, repr(e)))
             abort(400, '.action object is invalid')
 
-        msg = self._action_to_msg(action)
-
-        # If None was returned, then this type of actions is not supported.
-        if not msg:
+        try:
+            msg = self._action_to_msg(action)
+        except RuntimeError:
             return "OK"
 
         queue = self.get_message_queue(chat_id, action.board)
