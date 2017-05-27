@@ -120,7 +120,7 @@ class WebhookReciever:
                 board_url=action.board.url,
             )
         elif action.type == 'addMemberToCard':
-            if action.member.id == user.id:
+            if action.member.id == action.id_member_creator:
                 msg = messages.HOOK_CARD_SELF_ADDED.format(
                     user_name=action.member_creator().fullname,
                     card_text=action.card.name,
@@ -138,7 +138,7 @@ class WebhookReciever:
                     board_url=action.board.url,
                 )
         elif action.type == 'removeMemberFromCard':
-            if action.member.id == user.id:
+            if action.member.id == action.id_member_creator:
                 msg = messages.HOOK_CARD_SELF_REMOVED.format(
                     user_name=action.member_creator().fullname,
                     card_text=action.card.name,
