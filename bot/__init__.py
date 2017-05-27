@@ -338,7 +338,7 @@ class TrelloBot(BaseBot):
 
             hook_map[b.name] = h
 
-        ctx._start_dialog_logged(ctx, ForgetHookDialog(hook_map))
+        self._start_dialog_logged(ctx, ForgetHookDialog(hook_map))
 
     def cmd_dev(self, ctx: Context):
         self._log_command(ctx, "dev")
