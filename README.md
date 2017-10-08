@@ -1,5 +1,7 @@
 # Trello Bot for Telegram
 
+![Screenshot](./assets/screenshot1.png)
+
 Simple Telegram bot, notifying users and groups about changes on boards.
 
 Please, notice that __I do not host this bot__ for public use. If you want to
